@@ -4,7 +4,7 @@
 ## Description
 Adapted from Colin Clarke's code by Alan Foley Jan 2022. Changes must be made to code and scripts to suit data. Reference genome and sample_info.txt may need adaptation.
 Shifted and unshifted reference sequences are used to cater for the circularity of mtDNA.
-Last line of sample_infor.txt does not run, so its useful to put "TEST" as the final line.
+Last line of sample_info.txt does not run, so its useful to put "TEST" as the final line.
 
 ## Dependencies
 
