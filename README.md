@@ -24,16 +24,16 @@ done
 
 ## Prepare reference indexes
 ```bash
-samtools faidx reference_genome/unshifted/cgr_reference.fasta
-samtools faidx reference_genome/shifted/cgr_reference.fasta
+samtools faidx reference_genome/unshifted/KX576660.fasta
+samtools faidx reference_genome/shifted/KX576660.fasta
 
 java -jar  /home/alan/bin/picard.jar CreateSequenceDictionary \
-R=reference_genome/unshifted/cgr_reference.fasta \
-O=reference_genome/unshifted/cgr_reference.dict
+R=reference_genome/unshifted/KX576660.fasta \
+O=reference_genome/unshifted/KX576660.dict
 
 java -jar  /home/alan/bin/picard.jar CreateSequenceDictionary \
-R=reference_genome/shifted/cgr_reference.fasta \
-O=reference_genome/shifted/cgr_reference.dict
+R=reference_genome/shifted/KX576660.fasta \
+O=reference_genome/shifted/KX576660.dict
 ```
 
 ## Mapping
@@ -42,11 +42,11 @@ O=reference_genome/shifted/cgr_reference.dict
 ```bash
 mkdir -p bwa_index/unshifted/
 bwa index -a is -p  bwa_index/unshifted/cgridx \
-  reference_genome/cgr_reference.fasta
-
+  reference_genome/unshifted/KX576660.fasta
+  
 mkdir bwa_index/shifted
 bwa index -a is -p  bwa_index/shifted/cgridx \
-  reference_genome/shift_cgr_reference.fasta
+  reference_genome/shifted/KX576660.fasta
 ```
 
 ## mtDNA genome mapping
@@ -111,18 +111,18 @@ for mode in unshifted shifted; do
     java -jar  /home/alan/bin/picard.jar BuildBamIndex \
     INPUT=bwa_mapping/$mode/added_read_group/$sample.bam \
 
-    sudo docker run --rm -v /home/alan/MethodsPaper:/home broadinstitute/gatk3:3.8-0 \
+    sudo docker run --rm -v /home/alan/KX576660:/home broadinstitute/gatk3:3.8-0 \
     java -jar GenomeAnalysisTK.jar \
     -T RealignerTargetCreator \
     -I ../home/bwa_mapping/$mode/added_read_group/"$sample".bam \
-    -R ../home/reference_genome/$mode/cgr_reference.fasta \
+    -R ../home/reference_genome/$mode/KX576660.fasta \
     -o ../home/variant_calling/$mode/indel_realigned/intervals/$sample.IndelRealigner.intervals
 
-    sudo docker run --rm -v /home/alan/MethodsPaper:/home broadinstitute/gatk3:3.8-0 \
+    sudo docker run --rm -v /home/alan/KX576660:/home broadinstitute/gatk3:3.8-0 \
     java -jar  /usr/GenomeAnalysisTK.jar \
     -T IndelRealigner \
       -I ../home/bwa_mapping/$mode/added_read_group/"$sample".bam \
-      -R ../home/reference_genome/$mode/cgr_reference.fasta \
+      -R ../home/reference_genome/$mode/KX576660.fasta \
       --maxReadsForRealignment 15000000 \
       --maxReadsInMemory 150000000 \
       -targetIntervals ../home/variant_calling/$mode/indel_realigned/intervals/$sample.IndelRealigner.intervals \
@@ -141,7 +141,7 @@ mkdir variant_calling/$mode/base_recalibration/bam_files
     # initial snp calling with lofreq
     sudo ./lofreq_star-2.1.2/bin/lofreq call-parallel \
     --pp-threads 12 \
-    -f reference_genome/$mode/cgr_reference.fasta \
+    -f reference_genome/$mode/KX576660.fasta \
     variant_calling/$mode/indel_realigned/bam_files/$sample.bam \
     -o variant_calling/$mode/base_recalibration/vcf/$sample.raw.lofreq.vcf
 
@@ -150,28 +150,28 @@ mkdir variant_calling/$mode/base_recalibration/bam_files
     -o variant_calling/$mode/base_recalibration/vcf/$sample.base.recal.lofreq
 
     # apply "ground truth" SNPs
-    sudo docker run --rm -v /home/alan/MethodsPaper:/home broadinstitute/gatk3:3.8-0 \
+    sudo docker run --rm -v /home/alan/KX576660:/home broadinstitute/gatk3:3.8-0 \
       java -jar  /usr/GenomeAnalysisTK.jar \
     -T BaseRecalibrator \
-    -R ../home/reference_genome/$mode/cgr_reference.fasta \
+    -R ../home/reference_genome/$mode/KX576660.fasta \
     -I ../home/variant_calling/$mode/indel_realigned/bam_files/$sample.bam \
     -knownSites ../home/variant_calling/$mode/base_recalibration/vcf/$sample.base.recal.lofreq \
     -o ../home/variant_calling/$mode/base_recalibration/vcf/"$sample".recal_data.table
 
     # assess the effect of base recalibration
-    sudo docker run --rm -v /home/alan/MethodsPaper:/home broadinstitute/gatk3:3.8-0 \
+    sudo docker run --rm -v /home/alan/KX576660:/home broadinstitute/gatk3:3.8-0 \
     java -jar  /usr/GenomeAnalysisTK.jar \
     -T BaseRecalibrator \
-    -R ../home/reference_genome/$mode/cgr_reference.fasta \
+    -R ../home/reference_genome/$mode/KX576660.fasta \
     -I ../home/variant_calling/$mode/indel_realigned/bam_files/$sample.bam \
     -knownSites ../home/variant_calling/$mode/base_recalibration/vcf/$sample.base.recal.lofreq \
     -BQSR ../home/variant_calling/$mode/base_recalibration/vcf/$sample.recal_data.table \
     -o ../home/variant_calling/$mode/base_recalibration/vcf/$sample.post.recal.data.table
 
-    sudo docker run --rm -v /home/alan/MethodsPaper:/home broadinstitute/gatk3:3.8-0 \
+    sudo docker run --rm -v /home/alan/KX576660:/home broadinstitute/gatk3:3.8-0 \
     java -jar  /usr/GenomeAnalysisTK.jar \
     -T PrintReads \
-    -R ../home/reference_genome/$mode/cgr_reference.fasta \
+    -R ../home/reference_genome/$mode/KX576660.fasta \
     -I ../home/variant_calling/$mode/indel_realigned/bam_files/$sample.bam \
     -BQSR ../home/variant_calling/$mode/base_recalibration/vcf/$sample.recal_data.table \
     -o  ../home/variant_calling/$mode/base_recalibration/bam_files/$sample.bam
@@ -191,12 +191,12 @@ mkdir -p variant_calling/$mode/indels/lofreq
       call-parallel \
        --pp-threads 24 \
        variant_calling/$mode/base_recalibration/bam_files/$sample.bam \
-       -f reference_genome/$mode/cgr_reference.fasta \
+       -f reference_genome/$mode/KX576660.fasta \
        -o variant_calling/$mode/snps/lofreq/$sample.lofreq
 
        sudo ./lofreq_star-2.1.2/bin/lofreq call --call-indels --only-indels \
         variant_calling/$mode/base_recalibration/bam_files/$sample.bam \
-       -f reference_genome/$mode/cgr_reference.fasta \
+       -f reference_genome/$mode/KX576660.fasta \
        -o variant_calling/$mode/indels/lofreq/$sample.lofreq
 
        sudo ./lofreq_star-2.1.2/bin/lofreq filter \
@@ -221,7 +221,7 @@ mkdir -p variant_calling/$mode/snps/varscan
 mkdir -p variant_calling/$mode/indels/varscan
   cat data/sample_info.txt | while read sample; do
     samtools mpileup -B  -d 10000000 \
-    -f reference_genome/$mode/cgr_reference.fasta \
+    -f reference_genome/$mode/KX576660.fasta \
     variant_calling/$mode/base_recalibration/bam_files/$sample.bam | \
     java -jar VarScan.v2.3.9.jar \
     mpileup2snp \
@@ -232,7 +232,7 @@ mkdir -p variant_calling/$mode/indels/varscan
     --output-vcf 1 > variant_calling/$mode/snps/varscan/$sample.filter.varscan
 
   samtools mpileup -B -d 10000000 \
-  -f reference_genome/$mode/cgr_reference.fasta \
+  -f reference_genome/$mode/KX576660.fasta \
   variant_calling/$mode/base_recalibration/bam_files/$sample.bam | \
   java -jar VarScan.v2.3.9.jar \
   mpileup2indel \
@@ -389,46 +389,46 @@ for mode in unshifted shifted; do
   touch results_output/$mode/snps/variant_table/$sample.summary
   touch results_output/$mode/indel/variant_table/$sample.summary
     if [ "$mode" = "unshifted" ]; then
-      java -jar "/home/alan/iSeq_alan/snpEff/snpEff.jar" ann \
+      java -jar "/home/alan/KX576660/snpEff/snpEff.jar" ann \
       -no-downstream -no-upstream -no-utr -no-intergenic -no-intron -geneId \
-      CriGri_1.0.99 \
+      KX576660 \
       variant_calling/$mode/calling_overlap/snp/common_vcf/$sample.common.vcf  > \
       results_output/$mode/snps/snpEff_vcf/$sample.vcf
 
-      java -jar "/home/alan/iSeq_alan/snpEff/snpEff.jar" ann \
+      java -jar "/home/alan/KX576660/snpEff/snpEff.jar" ann \
       -no-downstream -no-upstream -no-utr -no-intergenic -no-intron -geneId \
-      CriGri_1.0.99 \
+      KX576660 \
       variant_calling/$mode/calling_overlap/indels/common_vcf/$sample.common.vcf  > \
       results_output/$mode/indel/snpEff_vcf/$sample.vcf
     else
       vcf-sort variant_calling/$mode/calling_overlap/snp/common_modified_vcf/$sample.annotated.common.vcf > \
       variant_calling/$mode/calling_overlap/snp/common_modified_vcf/$sample.annotated.common.sorted.vcf
-      java -jar "/home/alan/iSeq_alan/snpEff/snpEff.jar" ann \
+      java -jar "/home/alan/KX576660/snpEff/snpEff.jar" ann \
       -no-downstream -no-upstream -no-utr -no-intergenic -no-intron -geneId \
-      CriGri_1.0.99 \
+      KX576660 \
       variant_calling/$mode/calling_overlap/snp/common_modified_vcf/$sample.annotated.common.sorted.vcf  > \
       results_output/$mode/snps/snpEff_vcf/$sample.vcf
 
       vcf-sort variant_calling/$mode/calling_overlap/indels/common_modified_vcf/$sample.annotated.common.vcf > \
       variant_calling/$mode/calling_overlap/indels/common_modified_vcf/$sample.annotated.common.sorted.vcf
-      java -jar "/home/alan/iSeq_alan/snpEff/snpEff.jar" ann \
+      java -jar "/home/alan/KX576660/snpEff/snpEff.jar" ann \
       -no-downstream -no-upstream -no-utr -no-intergenic -no-intron -geneId \
-      CriGri_1.0.99 \
+      KX576660 \
       variant_calling/$mode/calling_overlap/indels/common_modified_vcf/$sample.annotated.common.sorted.vcf  > \
       results_output/$mode/indel/snpEff_vcf/$sample.vcf
     fi
-    
-    sudo docker run --rm -v /home/alan/MethodsPaper:/home broadinstitute/gatk3:3.8-0 \
+
+    sudo docker run --rm -v /home/alan/KX576660:/home broadinstitute/gatk3:3.8-0 \
     java -jar /usr/GenomeAnalysisTK.jar \
-    -R ../home/reference_genome/$mode/cgr_reference.fasta \
+    -R ../home/reference_genome/$mode/KX576660.fasta \
     -T VariantsToTable \
     -V ../home/results_output/$mode/snps/snpEff_vcf/$sample.vcf \
     -F POS -F REF -F ALT -F DP -F AF -F DP4 -F SB -F ANN \
     -o ../home/results_output/$mode/snps/variant_table/$sample.summary
 
-    sudo docker run --rm -v /home/alan/MethodsPaper:/home broadinstitute/gatk3:3.8-0 \
+    sudo docker run --rm -v /home/alan/KX576660:/home broadinstitute/gatk3:3.8-0 \
     java -jar /usr/GenomeAnalysisTK.jar \
-    -R ../home/reference_genome/$mode/cgr_reference.fasta \
+    -R ../home/reference_genome/$mode/KX576660.fasta \
     -T VariantsToTable \
     -V ../home/results_output/$mode/indel/snpEff_vcf/$sample.vcf \
     -F POS -F REF -F ALT -F DP -F AF -F DP4 -F SB -F ANN \
