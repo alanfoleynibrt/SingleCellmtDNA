@@ -1,5 +1,5 @@
 
----
+---bash
 title: "Single CHO cell mtDNA pipeline"
 author: "Alan Foley, adapted from Colin Clarke's code"
 date: "01/02/2022"
