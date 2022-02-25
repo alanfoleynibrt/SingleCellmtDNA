@@ -1,6 +1,6 @@
 
 ---
-### "Single CHO cell mtDNA pipeline"
+### Single CHO cell mtDNA pipeline in linux
 
 author: "Alan Foley, adapted from Colin Clarke's code"
 
