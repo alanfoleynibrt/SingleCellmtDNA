@@ -4,6 +4,8 @@
 
 author: "Alan Foley, adapted from Colin Clarke's code"
 
+contact: alan.foley@nibrt.ie
+
 date: "25/02/2022"
 
 ---
