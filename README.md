@@ -6,6 +6,8 @@ author: "Alan Foley, adapted from Colin Clarke's code"
 
 date: "25/03/2022"
 
+link: downstream analysis in R. R Notebook file: (link to R Notebook)
+
 ---
 
 ## Dependencies
